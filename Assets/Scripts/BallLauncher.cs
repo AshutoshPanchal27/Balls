@@ -5,8 +5,11 @@ using UnityEngine;
 
 public class BallLauncher : MonoBehaviour
 {
-    private Vector3 startPosition;
-    private Vector3 endPosition;
+    private Vector3 startDragPosition;
+    private Vector3 endDragPosition;
+    
+    [SerializeField]
+    private LaunchPreview launchPreview;
 
     [SerializeField]
     private GameObject ballPrefab;
@@ -31,17 +34,21 @@ public class BallLauncher : MonoBehaviour
 
     private void StartDrag(Vector3 worldPosition)
     {
-        startPosition = worldPosition;
+        startDragPosition = worldPosition;
+        launchPreview.SetStartPoint(transform.position);
     }
 
     private void ContinueDrag(Vector3 worldPosition)
     {
-        endPosition = worldPosition;
+        endDragPosition = worldPosition;
+
+        Vector3 direction = endDragPosition - startDragPosition; 
+        launchPreview.SetEndPoint(transform.position - direction);
     }
 
     private void EndDrag()
     {
-        Vector3 direction = endPosition - startPosition;
+        Vector3 direction = endDragPosition - startDragPosition;
         direction.Normalize();
 
         var ball = Instantiate(ballPrefab, transform.position, Quaternion.identity);
