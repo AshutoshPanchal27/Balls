@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,12 +6,23 @@ public class BallLauncher : MonoBehaviour
 {
     private Vector3 startDragPosition;
     private Vector3 endDragPosition;
-    
+    private int ballsReady;
+
+    private List<Ball> balls = new List<Ball>();
+
+    [SerializeField]
+    private BlockSpawner blockSpawner;
+
     [SerializeField]
     private LaunchPreview launchPreview;
 
     [SerializeField]
-    private GameObject ballPrefab;
+    private Ball ballPrefab;
+
+    private void Awake()
+    {
+        CreateBall();
+    }
 
     private void Update()
     {
@@ -32,6 +42,13 @@ public class BallLauncher : MonoBehaviour
         }
     }
 
+    private void CreateBall()
+    {
+        var ball = Instantiate(ballPrefab, this.transform);
+        balls.Add(ball);
+        ballsReady++;
+    }
+
     private void StartDrag(Vector3 worldPosition)
     {
         startDragPosition = worldPosition;
@@ -48,10 +65,32 @@ public class BallLauncher : MonoBehaviour
 
     private void EndDrag()
     {
+        StartCoroutine(LaunchBalls());
+    }
+
+    private IEnumerator LaunchBalls()
+    {
         Vector3 direction = endDragPosition - startDragPosition;
         direction.Normalize();
 
-        var ball = Instantiate(ballPrefab, transform.position, Quaternion.identity);
-        ball.GetComponent<Rigidbody2D>().AddForce(-direction);
+        foreach (var ball in balls)
+        {
+            ball.transform.position = transform.position;
+            ball.gameObject.SetActive(true);
+            ball.GetComponent<Rigidbody2D>().AddForce(-direction);
+
+            yield return new WaitForSeconds(0.1f);
+        }
+        ballsReady = 0;
+    }
+
+    public void ReturnBall()
+    {
+        ballsReady++;
+        if (ballsReady == balls.Count)
+        {
+            blockSpawner.SpawnRowOfBlocks();
+            CreateBall();
+        }
     }
 }
